@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  auth-service:
+    image: ${DOCKER_REGISTRY:-your-registry.com}/auth-service:${TAG:-latest}
+    container_name: auth-service
+    restart: always
+    ports:
+      - "${AUTH_SERVICE_PORT:-8882}:3000"
+    env_file:
+      - ./.env
+    environment:
+      - NODE_ENV=${ENV:-production}
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').request('http://localhost:3000/health', { timeout: 2000 }, (res) => process.exit(res.statusCode !== 200)).end()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - database
+    networks:
+      - vnist-network
+
+networks:
+  vnist-network:
+    external: true
